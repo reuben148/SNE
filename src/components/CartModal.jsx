@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function CartModal({ isOpen, onClose, cartItems, onRemove }) {
+export default function CartModal({ isOpen, onClose, cartItems, onRemove, onCheckout }) {
   if (!isOpen) return null;
 
   return (
@@ -77,7 +77,14 @@ export default function CartModal({ isOpen, onClose, cartItems, onRemove }) {
             <span>Total</span>
             <span>₦{cartItems.reduce((total, item) => total + item.price, 0).toLocaleString()}</span>
           </div>
-          <button className="btn-primary" style={{ width: '100%', borderColor: '#fff' }}>Checkout</button>
+          <button 
+            className="btn-primary" 
+            style={{ width: '100%', borderColor: '#fff' }}
+            onClick={onCheckout}
+            disabled={cartItems.length === 0}
+          >
+            Checkout
+          </button>
         </div>
       </div>
     </div>

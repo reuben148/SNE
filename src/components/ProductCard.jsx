@@ -38,7 +38,7 @@ export default function ProductCard({ product, onAddToCart }) {
       </div>
       
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
-        <div style={{ display: 'flex', gap: '12px' }}>
+        <div className="card-options">
           <select 
             value={selectedSize} 
             onChange={(e) => setSelectedSize(e.target.value)}

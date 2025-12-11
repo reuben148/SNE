@@ -130,4 +130,13 @@ a {
   .container {
     padding: 0 16px;
   }
+
+  .card-options {
+    flex-direction: column;
+  }
+}
+
+.card-options {
+  display: flex;
+  gap: 12px;
 }
