@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import emailjs from '@emailjs/browser';
+import { usePaystackPayment } from 'react-paystack';
 
 export default function CheckoutModal({ isOpen, onClose, cartItems, totalAmount, onClearCart }) {
   const [formData, setFormData] = useState({
@@ -8,9 +9,20 @@ export default function CheckoutModal({ isOpen, onClose, cartItems, totalAmount,
     phone: '',
     address: ''
   });
+  const [paymentMethod, setPaymentMethod] = useState('card'); // 'card' or 'bank'
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState('');
+
+  // PAYSTACK CONFIG - REPLACE WITH YOUR PUBLIC KEY
+  const paystackConfig = {
+    reference: (new Date()).getTime().toString(),
+    email: formData.email,
+    amount: totalAmount * 100, // Paystack expects amount in kobo
+    publicKey: 'pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', // REPLACE THIS
+  };
+
+  const initializePayment = usePaystackPayment(paystackConfig);
 
   if (!isOpen) return null;
 
@@ -18,11 +30,7 @@ export default function CheckoutModal({ isOpen, onClose, cartItems, totalAmount,
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setError('');
-
+  const sendOrderEmail = async (paymentDetails = null) => {
     // Prepare template params
     const templateParams = {
       to_name: "Admin",
@@ -30,6 +38,8 @@ export default function CheckoutModal({ isOpen, onClose, cartItems, totalAmount,
       from_email: formData.email,
       phone: formData.phone,
       address: formData.address,
+      payment_method: paymentDetails ? "Debit Card (Paystack)" : "Bank Transfer",
+      payment_ref: paymentDetails ? paymentDetails.reference : "Pending Transfer",
       message: `
         Order Details:
         ${cartItems.map(item => `- ${item.name} (${item.selectedSize}${item.selectedColor ? `, ${item.selectedColor}` : ''}): ₦${item.price.toLocaleString()}`).join('\n')}
@@ -41,25 +51,46 @@ export default function CheckoutModal({ isOpen, onClose, cartItems, totalAmount,
 
     try {
       // REPLACE THESE WITH YOUR ACTUAL KEYS FROM EMAILJS
-      const SERVICE_ID = 'YOUR_SERVICE_ID';
-      const TEMPLATE_ID = 'YOUR_TEMPLATE_ID';
-      const PUBLIC_KEY = 'YOUR_PUBLIC_KEY';
+      const SERVICE_ID = 'service_c21muzw';
+      const TEMPLATE_ID = 'template_maxubpf';
+      const PUBLIC_KEY = 'mJx2XB84joa3oObyQ';
 
-      // For now, we simulate success if keys are placeholders
       if (SERVICE_ID === 'YOUR_SERVICE_ID') {
         console.log('EmailJS Keys are placeholders. Simulating success.', templateParams);
-        await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate network delay
+        await new Promise(resolve => setTimeout(resolve, 1500)); 
       } else {
         await emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams, PUBLIC_KEY);
       }
-
+      
       setIsSuccess(true);
       onClearCart();
     } catch (err) {
       console.error('EmailJS Error:', err);
-      setError('Failed to send order. Please try again or contact support.');
+      setError('Failed to send order notification. Please contact support.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const onSuccess = (reference) => {
+    sendOrderEmail(reference);
+  };
+
+  const onClosePaystack = () => {
+    setIsSubmitting(false);
+    console.log('Payment closed');
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError('');
+
+    if (paymentMethod === 'card') {
+      initializePayment(onSuccess, onClosePaystack);
+    } else {
+      // Bank Transfer flow
+      await sendOrderEmail(null);
     }
   };
 
@@ -72,16 +103,26 @@ export default function CheckoutModal({ isOpen, onClose, cartItems, totalAmount,
             Thank you for your purchase, {formData.name}.<br/>
             We have received your order details.
           </p>
-          <div style={{ backgroundColor: '#222', padding: '16px', borderRadius: '8px', marginBottom: '24px', textAlign: 'left' }}>
-            <h4 style={{ color: '#d4af37', marginBottom: '8px' }}>Payment Instructions</h4>
-            <p style={{ fontSize: '0.9rem', marginBottom: '4px' }}>Please transfer <strong>₦{totalAmount.toLocaleString()}</strong> to:</p>
-            <p style={{ fontSize: '0.9rem', marginBottom: '4px' }}>Bank: <strong>GTBank</strong></p>
-            <p style={{ fontSize: '0.9rem', marginBottom: '4px' }}>Account Number: <strong>1234567890</strong></p>
-            <p style={{ fontSize: '0.9rem' }}>Account Name: <strong>SNE Clothing</strong></p>
-          </div>
-          <p style={{ fontSize: '0.8rem', color: '#888', marginBottom: '24px' }}>
-            Please send proof of payment to reubenluka555@gmail.com or WhatsApp 09071009969.
-          </p>
+          
+          {paymentMethod === 'bank' && (
+            <div style={{ backgroundColor: '#222', padding: '16px', borderRadius: '8px', marginBottom: '24px', textAlign: 'left' }}>
+              <h4 style={{ color: '#d4af37', marginBottom: '8px' }}>Payment Instructions</h4>
+              <p style={{ fontSize: '0.9rem', marginBottom: '4px' }}>Please transfer <strong>₦{totalAmount.toLocaleString()}</strong> to:</p>
+              <p style={{ fontSize: '0.9rem', marginBottom: '4px' }}>Bank: <strong>GTBank</strong></p>
+              <p style={{ fontSize: '0.9rem', marginBottom: '4px' }}>Account Number: <strong>1234567890</strong></p>
+              <p style={{ fontSize: '0.9rem' }}>Account Name: <strong>SNE Clothing</strong></p>
+              <p style={{ fontSize: '0.8rem', color: '#888', marginTop: '12px' }}>
+                Please send proof of payment to reubenluka555@gmail.com or WhatsApp 09071009969.
+              </p>
+            </div>
+          )}
+
+          {paymentMethod === 'card' && (
+             <p style={{ fontSize: '0.9rem', color: '#888', marginBottom: '24px' }}>
+               Your payment was successful. A confirmation email has been sent.
+             </p>
+          )}
+
           <button onClick={onClose} className="btn-primary" style={{ width: '100%', borderColor: '#fff' }}>
             Close
           </button>
@@ -140,6 +181,32 @@ export default function CheckoutModal({ isOpen, onClose, cartItems, totalAmount,
             style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }}
           />
 
+          <div style={{ textAlign: 'left', marginTop: '8px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', color: '#ccc' }}>Payment Method:</label>
+            <div style={{ display: 'flex', gap: '16px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <input 
+                  type="radio" 
+                  name="paymentMethod" 
+                  value="card" 
+                  checked={paymentMethod === 'card'}
+                  onChange={() => setPaymentMethod('card')}
+                />
+                Pay with Card
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <input 
+                  type="radio" 
+                  name="paymentMethod" 
+                  value="bank" 
+                  checked={paymentMethod === 'bank'}
+                  onChange={() => setPaymentMethod('bank')}
+                />
+                Bank Transfer
+              </label>
+            </div>
+          </div>
+
           {error && <p style={{ color: 'red', fontSize: '0.9rem' }}>{error}</p>}
 
           <button 
@@ -148,7 +215,7 @@ export default function CheckoutModal({ isOpen, onClose, cartItems, totalAmount,
             className="btn-primary" 
             style={{ width: '100%', borderColor: '#fff', marginTop: '8px', opacity: isSubmitting ? 0.7 : 1 }}
           >
-            {isSubmitting ? 'Processing...' : 'Confirm Order'}
+            {isSubmitting ? 'Processing...' : (paymentMethod === 'card' ? 'Pay Now' : 'Confirm Order')}
           </button>
         </form>
       </div>
