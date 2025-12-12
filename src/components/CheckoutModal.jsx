@@ -31,8 +31,12 @@ export default function CheckoutModal({ isOpen, onClose, cartItems, totalAmount,
   };
 
   const sendOrderEmail = async (paymentDetails = null) => {
+    // Generate a simple Order ID
+    const orderId = `SNE-${Math.floor(100000 + Math.random() * 900000)}`;
+
     // Prepare template params
     const templateParams = {
+      order_id: orderId,
       to_name: "Admin",
       from_name: formData.name,
       from_email: formData.email,
@@ -41,6 +45,8 @@ export default function CheckoutModal({ isOpen, onClose, cartItems, totalAmount,
       payment_method: paymentDetails ? "Debit Card (Paystack)" : "Bank Transfer",
       payment_ref: paymentDetails ? paymentDetails.reference : "Pending Transfer",
       message: `
+        Order ID: ${orderId}
+        
         Order Details:
         ${cartItems.map(item => `- ${item.name} (${item.selectedSize}${item.selectedColor ? `, ${item.selectedColor}` : ''}): ₦${item.price.toLocaleString()}`).join('\n')}
         
