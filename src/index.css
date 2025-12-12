@@ -140,3 +140,130 @@ a {
   display: flex;
   gap: 12px;
 }
+
+/* Cart Modal Styles */
+.cart-modal-overlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+}
+
+.cart-modal {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  background-color: #111;
+  color: #fff;
+  height: 100%;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -4px 0 20px rgba(255, 255, 255, 0.1);
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.cart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.cart-header h2 {
+  font-size: 1.5rem;
+}
+
+.close-btn {
+  font-size: 1.5rem;
+  color: #fff;
+}
+
+.cart-items {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.cart-item {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #333;
+  padding-bottom: 16px;
+}
+
+.cart-item img {
+  width: 80px;
+  height: 100px;
+  object-fit: cover;
+}
+
+.item-details {
+  flex: 1;
+}
+
+.item-details h4 {
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.item-details p {
+  color: #888;
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+
+.remove-btn {
+  color: #666;
+  font-size: 0.9rem;
+  align-self: flex-start;
+}
+
+.remove-btn:hover {
+  color: #fff;
+}
+
+.cart-footer {
+  border-top: 1px solid #333;
+  padding-top: 24px;
+  margin-top: auto;
+}
+
+.checkout-btn {
+  width: 100%;
+  background-color: transparent;
+  color: #fff;
+  padding: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-size: 0.9rem;
+  border: 1px solid #fff;
+  transition: all 0.3s ease;
+}
+
+.checkout-btn:hover {
+  background-color: #fff;
+  color: #000;
+}
+
+.checkout-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.empty-cart {
+  color: #888;
+  text-align: center;
+  margin-top: 40px;
+}
