@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import emailjs from '@emailjs/browser';
+import { usePaystackPayment } from 'react-paystack';
 
 export default function CheckoutModal({ isOpen, onClose, cartItems, totalAmount, onClearCart }) {
   const [formData, setFormData] = useState({
@@ -8,9 +9,20 @@ export default function CheckoutModal({ isOpen, onClose, cartItems, totalAmount,
     phone: '',
     address: ''
   });
+  const [paymentMethod, setPaymentMethod] = useState('card'); // 'card' or 'bank'
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState('');
+
+  // PAYSTACK CONFIG
+  const paystackConfig = {
+    reference: (new Date()).getTime().toString(),
+    email: formData.email,
+    amount: totalAmount * 100, // Paystack expects amount in kobo
+    publicKey: 'pk_test_99137c1d67e334dd5260470f89ef5c6371e43a81',
+  };
+
+  const initializePayment = usePaystackPayment(paystackConfig);
 
   if (!isOpen) return null;
 
@@ -18,11 +30,7 @@ export default function CheckoutModal({ isOpen, onClose, cartItems, totalAmount,
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setError('');
-
+  const sendOrderEmail = async (paymentDetails = null) => {
     // Prepare template params
     const templateParams = {
       to_name: "Admin",
@@ -30,8 +38,8 @@ export default function CheckoutModal({ isOpen, onClose, cartItems, totalAmount,
       from_email: formData.email,
       phone: formData.phone,
       address: formData.address,
-      payment_method: "Bank Transfer",
-      payment_ref: "Pending Transfer",
+      payment_method: paymentDetails ? "Debit Card (Paystack)" : "Bank Transfer",
+      payment_ref: paymentDetails ? paymentDetails.reference : "Pending Transfer",
       message: `
         Order Details:
         ${cartItems.map(item => `- ${item.name} (${item.selectedSize}${item.selectedColor ? `, ${item.selectedColor}` : ''}): ₦${item.price.toLocaleString()}`).join('\n')}
@@ -66,6 +74,28 @@ export default function CheckoutModal({ isOpen, onClose, cartItems, totalAmount,
     }
   };
 
+  const onSuccess = (reference) => {
+    sendOrderEmail(reference);
+  };
+
+  const onClosePaystack = () => {
+    setIsSubmitting(false);
+    console.log('Payment closed');
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError('');
+
+    if (paymentMethod === 'card') {
+      initializePayment(onSuccess, onClosePaystack);
+    } else {
+      // Bank Transfer flow
+      await sendOrderEmail(null);
+    }
+  };
+
   if (isSuccess) {
     return (
       <div style={modalOverlayStyle}>
@@ -76,16 +106,24 @@ export default function CheckoutModal({ isOpen, onClose, cartItems, totalAmount,
             We have received your order details.
           </p>
           
-          <div style={{ backgroundColor: '#222', padding: '16px', borderRadius: '8px', marginBottom: '24px', textAlign: 'left' }}>
-            <h4 style={{ color: '#d4af37', marginBottom: '8px' }}>Payment Instructions</h4>
-            <p style={{ fontSize: '0.9rem', marginBottom: '4px' }}>Please transfer <strong>₦{totalAmount.toLocaleString()}</strong> to:</p>
-            <p style={{ fontSize: '0.9rem', marginBottom: '4px' }}>Bank: <strong>GTBank</strong></p>
-            <p style={{ fontSize: '0.9rem', marginBottom: '4px' }}>Account Number: <strong>1234567890</strong></p>
-            <p style={{ fontSize: '0.9rem' }}>Account Name: <strong>SNE Clothing</strong></p>
-            <p style={{ fontSize: '0.8rem', color: '#888', marginTop: '12px' }}>
-              Please send proof of payment to reubenluka555@gmail.com or WhatsApp 09071009969.
-            </p>
-          </div>
+          {paymentMethod === 'bank' && (
+            <div style={{ backgroundColor: '#222', padding: '16px', borderRadius: '8px', marginBottom: '24px', textAlign: 'left' }}>
+              <h4 style={{ color: '#d4af37', marginBottom: '8px' }}>Payment Instructions</h4>
+              <p style={{ fontSize: '0.9rem', marginBottom: '4px' }}>Please transfer <strong>₦{totalAmount.toLocaleString()}</strong> to:</p>
+              <p style={{ fontSize: '0.9rem', marginBottom: '4px' }}>Bank: <strong>GTBank</strong></p>
+              <p style={{ fontSize: '0.9rem', marginBottom: '4px' }}>Account Number: <strong>1234567890</strong></p>
+              <p style={{ fontSize: '0.9rem' }}>Account Name: <strong>SNE Clothing</strong></p>
+              <p style={{ fontSize: '0.8rem', color: '#888', marginTop: '12px' }}>
+                Please send proof of payment to reubenluka555@gmail.com or WhatsApp 09071009969.
+              </p>
+            </div>
+          )}
+
+          {paymentMethod === 'card' && (
+             <p style={{ fontSize: '0.9rem', color: '#888', marginBottom: '24px' }}>
+               Your payment was successful. A confirmation email has been sent.
+             </p>
+          )}
 
           <button onClick={onClose} className="btn-primary" style={{ width: '100%', borderColor: '#fff' }}>
             Close
@@ -145,6 +183,32 @@ export default function CheckoutModal({ isOpen, onClose, cartItems, totalAmount,
             style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }}
           />
 
+          <div style={{ textAlign: 'left', marginTop: '8px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', color: '#ccc' }}>Payment Method:</label>
+            <div style={{ display: 'flex', gap: '16px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <input 
+                  type="radio" 
+                  name="paymentMethod" 
+                  value="card" 
+                  checked={paymentMethod === 'card'}
+                  onChange={() => setPaymentMethod('card')}
+                />
+                Pay with Card
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <input 
+                  type="radio" 
+                  name="paymentMethod" 
+                  value="bank" 
+                  checked={paymentMethod === 'bank'}
+                  onChange={() => setPaymentMethod('bank')}
+                />
+                Bank Transfer
+              </label>
+            </div>
+          </div>
+
           {error && <p style={{ color: 'red', fontSize: '0.9rem' }}>{error}</p>}
 
           <button 
@@ -153,7 +217,7 @@ export default function CheckoutModal({ isOpen, onClose, cartItems, totalAmount,
             className="btn-primary" 
             style={{ width: '100%', borderColor: '#fff', marginTop: '8px', opacity: isSubmitting ? 0.7 : 1 }}
           >
-            {isSubmitting ? 'Processing...' : 'Confirm Order'}
+            {isSubmitting ? 'Processing...' : (paymentMethod === 'card' ? 'Pay Now' : 'Confirm Order')}
           </button>
         </form>
       </div>
