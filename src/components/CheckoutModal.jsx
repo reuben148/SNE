@@ -58,7 +58,9 @@ export default function CheckoutModal({ isOpen, onClose, cartItems, totalAmount,
       onClearCart();
     } catch (err) {
       console.error('EmailJS Error:', err);
-      setError('Failed to send order notification. Please contact support.');
+      // Show the actual error message from EmailJS if available
+      const errorMessage = err.text || err.message || 'Unknown error occurred';
+      setError(`Failed to send: ${errorMessage}. Please check your keys and permissions.`);
     } finally {
       setIsSubmitting(false);
     }
