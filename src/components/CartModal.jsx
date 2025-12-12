@@ -40,6 +40,9 @@ export default function CartModal({ isOpen, onClose, cartItems, onRemove, onChec
                   <span>Shipping:</span>
                   <span>₦{shippingFee ? shippingFee.toLocaleString() : '0'}</span>
                 </div>
+                <div style={{ textAlign: 'right', fontSize: '0.8rem', color: '#888', marginBottom: '16px', fontStyle: 'italic' }}>
+                  (Shipping takes 1 week)
+                </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.2rem', fontWeight: 'bold', color: '#fff' }}>
                   <span>Total:</span>
                   <span>₦{totalAmount ? totalAmount.toLocaleString() : '0'}</span>

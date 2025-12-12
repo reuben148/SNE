@@ -158,6 +158,7 @@ export default function CheckoutModal({ isOpen, onClose, cartItems, totalAmount,
         <div style={{ marginBottom: '24px', textAlign: 'left', backgroundColor: '#222', padding: '12px', borderRadius: '4px' }}>
           <p style={{ fontSize: '0.9rem', color: '#ccc' }}>Total to Pay:</p>
           <p style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#d4af37' }}>₦{totalAmount.toLocaleString()}</p>
+          <p style={{ fontSize: '0.8rem', color: '#888', marginTop: '4px', fontStyle: 'italic' }}>* Shipping takes 1 week</p>
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
