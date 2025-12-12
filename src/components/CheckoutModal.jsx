@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import emailjs from '@emailjs/browser';
 import { usePaystackPayment } from 'react-paystack';
 
-export default function CheckoutModal({ isOpen, onClose, cartItems, totalAmount, onClearCart }) {
+export default function CheckoutModal({ isOpen, onClose, cartItems, totalAmount, subtotal, shippingFee, onClearCart }) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -44,7 +44,15 @@ export default function CheckoutModal({ isOpen, onClose, cartItems, totalAmount,
         Order Details:
         ${cartItems.map(item => `- ${item.name} (${item.selectedSize}${item.selectedColor ? `, ${item.selectedColor}` : ''}): ₦${item.price.toLocaleString()}`).join('\n')}
         
+        Subtotal: ₦${subtotal ? subtotal.toLocaleString() : '0'}
+        Shipping Fee: ₦${shippingFee ? shippingFee.toLocaleString() : '5,000'}
         Total Amount: ₦${totalAmount.toLocaleString()}
+        
+        Shipping Details:
+        Name: ${formData.name}
+        Email: ${formData.email}
+        Phone: ${formData.phone}
+        Address: ${formData.address}
       `,
       reply_to: formData.email,
     };

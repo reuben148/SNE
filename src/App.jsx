@@ -28,7 +28,9 @@ function App() {
     setIsCartOpen(false);
   };
 
-  const totalAmount = cartItems.reduce((total, item) => total + item.price, 0);
+  const subtotal = cartItems.reduce((total, item) => total + item.price, 0);
+  const shippingFee = 5000;
+  const totalAmount = subtotal + shippingFee;
 
   return (
     <div className="app" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -48,6 +50,9 @@ function App() {
         onClose={() => setIsCartOpen(false)} 
         cartItems={cartItems} 
         onRemove={removeFromCart}
+        subtotal={subtotal}
+        shippingFee={shippingFee}
+        totalAmount={totalAmount}
         onCheckout={() => {
           setIsCartOpen(false);
           setIsCheckoutOpen(true);
@@ -58,6 +63,8 @@ function App() {
         isOpen={isCheckoutOpen}
         onClose={() => setIsCheckoutOpen(false)}
         cartItems={cartItems}
+        subtotal={subtotal}
+        shippingFee={shippingFee}
         totalAmount={totalAmount}
         onClearCart={clearCart}
       />
